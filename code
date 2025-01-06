@@ -1,0 +1,1013 @@
+//%%writefile main.cpp use it in colab
+
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdbool.h>
+#include<bits/stdc++.h>
+using namespace std;
+
+
+float f1(float x) { return ((x * x) * cos(x)) - (2 * x); }
+float f2(float x) { return ((6 - (2 / (x * x))) * (exp(2 + x) / 4)) + 1; }
+float f3(float x) { return (x * x * x) - (3 * sin(x * x)) + 1; }
+float f4(float x) { return (x * x * x) + 6 * (x * x) + 9.4 * (x) + 2.5; }
+
+
+float evaluarFuncion(int opcf, float x) {
+    switch (opcf) {
+        case 1: return f1(x);
+        case 2: return f2(x);
+        case 3: return f3(x);
+        case 4: return f4(x);
+        default: return 0.0;
+    }
+}
+
+
+bool esContinuaEnIntervalo(int opcf, float a, float b) {
+    int puntos = 100; // Dividimos el intervalo en 100 puntos
+    float paso = (b - a) / puntos;
+
+    for (int i = 0; i <= puntos; i++) {
+        float x = a + i * paso;
+        float valor = evaluarFuncion(opcf, x);
+
+        // Verifica si el valor es infinito o indefinido
+        if (isinf(valor) || isnan(valor)) {
+            return false; // La funciÃ³n no es continua en el intervalo
+        }
+    }
+    return true; // La funciÃ³n es continua en el intervalo
+}
+
+void biseccion(int opcf, float a, float b, int n, float tol) {
+
+    if (!esContinuaEnIntervalo(opcf, a, b)) {
+        printf("Advertencia: La funcion no es continua en el intervalo [%f, %f].\n", a, b);
+        return;
+    }
+
+    float fa = evaluarFuncion(opcf, a), fb = evaluarFuncion(opcf, b);
+    if (fa * fb > 0) {
+        printf("No hay raiz en el intervalo.\n");
+        return;
+    }
+
+    printf("\nIteracion\t a\t\t b\t\t f(a)\t\t f(b)\t\t p\t\t f(p)\t\t Error Relativo\n");
+    float p, fp, Er = tol + 1;
+    int i = 0;
+
+    while (i < n && Er > tol) {
+        p = (a + b) / 2;
+        fp = evaluarFuncion(opcf, p);
+        Er = fabs(b - a) / fabs(p);
+
+        printf("%d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n", i + 1, a, b, fa, fb, p, fp, Er);
+
+        if (fa * fp < 0) {
+            b = p;
+            fb = fp;
+        } else {
+            a = p;
+            fa = fp;
+        }
+        i++;
+    }
+    printf("La raiz obtenida es: %f y se obtuvo en la iteracion %d con un error de %.6f\n", p, i, Er);
+}
+
+void secante(int opcf, float a, float b, int n, float tol) {
+
+    if (!esContinuaEnIntervalo(opcf, a, b)) {
+        printf("Advertencia: La funciÃ³n no es continua en el intervalo [%f, %f].\n", a, b);
+        return;
+    }
+
+    printf("\nIteracion\t a\t\t b\t\t f(a)\t\t f(b)\t\t p\t\t f(p)\t\t Error Relativo\n");
+    float fa, fb, p, fp, Er = tol + 1;
+    int i = 0;
+
+    while (i < n && Er > tol) {
+        fa = evaluarFuncion(opcf, a);
+        fb = evaluarFuncion(opcf, b);
+
+        if (fa == fb) {
+            printf("Division por cero detectada. El metodo no puede continuar.\n");
+            return;
+        }
+
+        p = a - fa * (a - b) / (fa - fb);
+        fp = evaluarFuncion(opcf, p);
+
+        if (i > 0) Er = fabs((p - b) / p);
+
+        printf("%d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n", i + 1, a, b, fa, fb, p, fp, Er);
+
+        a = b;
+        b = p;
+        i++;
+    }
+    printf("La raiz obtenida es: %f y se obtuvo en la iteracion %d con un error de %.6f\n", b, i, Er);
+}
+
+
+void menu1() {
+     int opc, opcf, iteraciones;
+    float a, b, tolerancia;
+
+    while (true) {
+        printf("\nSeleccione la funcion a resolver:\n");
+        printf("1. f(x) = x^2 * cos(x) - 2x\n");
+        printf("2. f(x) = (6 - 2/x^2)(e^(2 + x) / 4) + 1\n");
+        printf("3. f(x) = x^3 - 3 * sen(x^2) + 1\n");
+        printf("4. f(x) = x^3 + 6x^2 + 9.4x + 2.5\n");
+        printf("5. Salir\n: ");
+        scanf("%d", &opcf);
+
+        if (opcf == 5) break;
+        if (opcf < 1 || opcf > 4) {
+            printf("OpciÃ³n invalida, intente de nuevo.\n");
+            continue;
+        }
+
+        printf("\nSeleccione el metodo:\n");
+        printf("1. Metodo de biseccion\n");
+        printf("2. Metodo de la secante\n: ");
+        scanf("%d", &opc);
+
+        if (opc < 1 || opc > 2) {
+            printf("Opcion invalida, intente de nuevo.\n");
+            continue;
+        }
+
+        printf("Ingrese el intervalo [a, b]:\n");
+        printf("a: ");
+        scanf("%f", &a);
+        printf("b: ");
+        scanf("%f", &b);
+        printf("Ingrese el numero maximo de iteraciones: ");
+        scanf("%d", &iteraciones);
+        printf("Ingrese la tolerancia: ");
+        scanf("%f", &tolerancia);
+
+        if (opc == 1) biseccion(opcf, a, b, iteraciones, tolerancia);
+        else if (opc == 2) secante(opcf, a, b, iteraciones, tolerancia);
+    }
+}
+
+
+// Función para crear una matriz de tamaño n x n
+float** crearMatriz(int n) {
+    float **matriz = (float **)malloc(n * sizeof(float *));
+    for (int i = 0; i < n; i++) {
+        matriz[i] = (float *)malloc(n * sizeof(float));
+    }
+    return matriz;
+}
+
+// FunciÃ³n para liberar memoria de la matriz
+void liberarMatriz(float **matriz, int n) {
+    for (int i = 0; i < n; i++) {
+        free(matriz[i]);
+    }
+    free(matriz);
+}
+
+// FunciÃ³n para leer una matriz de tamaÃ±o n x n desde la entrada estÃ¡ndar
+void leerMatriz(float **matriz, int n) {
+    printf("Ingrese los valores de la matriz por renglon:\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("Elemento [%d][%d]: ", i, j);
+            scanf("%f", &matriz[i][j]);
+        }
+    }
+}
+
+// FunciÃ³n para mostrar una matriz de tamaÃ±o n x n
+void mostrarMatriz(float **matriz, int n) {
+    printf("\nLa matriz actual es:\n");
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("%.2f ", matriz[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// FunciÃ³n para leer el vector independiente
+float* leerVectorIndependiente(int n) {
+    float *vector = (float *)malloc(n * sizeof(float));
+    printf("Ingrese los valores del vector independiente:\n");
+    for (int i = 0; i < n; i++) {
+        printf("Elemento [%d]: ", i);
+        scanf("%f", &vector[i]);
+    }
+    return vector;
+}
+
+// FunciÃ³n para liberar memoria del vector independiente
+void liberarVector(float *vector) {
+    free(vector);
+}
+
+// FunciÃ³n para verificar si una matriz es estrictamente diagonalmente dominante (EDD)
+bool esEDD(float **matriz, int n) {
+    bool esEstricDiagonalmenteDominante = true;
+
+    for (int i = 0; i < n; i++) {
+        float suma = 0.0;
+
+        for (int j = 0; j < n; j++) {
+            if (j != i) {
+                suma += fabs(matriz[i][j]);
+            }
+        }
+
+        if (fabs(matriz[i][i]) <= suma) {
+            esEstricDiagonalmenteDominante = false;
+            break;
+        }
+    }
+
+    return esEstricDiagonalmenteDominante;
+}
+
+// FunciÃ³n para verificar si una matriz es diagonalmente dominante (DD)
+bool esDD(float **matriz, int n) {
+    bool esDiagonalDominante = true;
+
+    for (int i = 0; i < n; i++) {
+        float diagonal = fabs(matriz[i][i]);  // Elemento en la diagonal
+        for (int j = 0; j < n; j++) {
+            if (i != j && fabs(matriz[i][j]) > diagonal) {
+                esDiagonalDominante = false;
+                break;
+            }
+        }
+        if (!esDiagonalDominante) {
+            break;  // Terminar el ciclo si se encuentra que no es DD
+        }
+    }
+
+    return esDiagonalDominante;
+}
+
+// FunciÃ³n para reorganizar filas y verificar si la matriz puede ser diagonalmente dominante
+bool reorganizarYVerificarDD(float **matriz, float *vector, int n) {
+    bool esPosibleReorganizar = true;
+
+    for (int i = 0; i < n; i++) {
+        int indiceMax = i;
+        float diagonal = fabs(matriz[i][i]);
+
+        // Buscar el mayor elemento en la columna para hacer "swap" de filas
+        for (int j = i + 1; j < n; j++) {
+            if (fabs(matriz[j][i]) > diagonal) {
+                diagonal = fabs(matriz[j][i]);
+                indiceMax = j;
+            }
+        }
+
+        // Si encontramos un elemento mayor en la columna, hacemos swap
+        if (indiceMax != i) {
+            // Intercambiar filas de la matriz
+            float *temp = matriz[i];
+            matriz[i] = matriz[indiceMax];
+            matriz[indiceMax] = temp;
+
+            // Intercambiar elementos del vector independiente
+            float tempValor = vector[i];
+            vector[i] = vector[indiceMax];
+            vector[indiceMax] = tempValor;
+        }
+
+        // Verificamos si es posible hacer DD tras la reorganizaciÃ³n
+        for (int k = 0; k < n; k++) {
+            if (i != k && fabs(matriz[i][k]) >= diagonal) {
+                esPosibleReorganizar = false;
+                break;
+            }
+        }
+
+        if (!esPosibleReorganizar) {
+            break;
+        }
+    }
+
+    return esPosibleReorganizar;
+}
+
+// FunciÃ³n para calcular el determinante por triangulaciÃ³n
+float determinante(float **matriz, int n) {
+    // Crear una copia de la matriz para no modificar la original
+    float **matrizTriangulada = crearMatriz(n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrizTriangulada[i][j] = matriz[i][j];
+        }
+    }
+
+    // TriangularizaciÃ³n
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (matrizTriangulada[j][i] != 0) {
+                float factor = matrizTriangulada[j][i] / matrizTriangulada[i][i];
+                for (int k = i; k < n; k++) {
+                    matrizTriangulada[j][k] -= factor * matrizTriangulada[i][k];
+                }
+            }
+        }
+    }
+
+    // Calcular el determinante como el producto de la diagonal
+    float det = 1.0;
+    for (int i = 0; i < n; i++) {
+        det *= matrizTriangulada[i][i];
+    }
+
+    liberarMatriz(matrizTriangulada, n);
+    return det;
+}
+
+void resolverSistema(float **matriz, float *vector, int n) {
+
+
+
+
+			 // Crear una copia de la matriz ampliada (matriz | vector)
+    float **matrizAmpliada = crearMatriz(n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrizAmpliada[i][j] = matriz[i][j];
+        }
+    }
+
+    // Agregar el vector independiente como la Ãºltima columna de la matriz ampliada
+    for (int i = 0; i < n; i++) {
+        matrizAmpliada[i][n] = vector[i];
+    }
+
+    // Eliminar filas para triangularizar la matriz
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (matrizAmpliada[j][i] != 0) {
+                float factor = matrizAmpliada[j][i] / matrizAmpliada[i][i];
+                for (int k = i; k <= n; k++) { // Cambiar el rango de k para incluir la columna del vector
+                    matrizAmpliada[j][k] -= factor * matrizAmpliada[i][k];
+                }
+            }
+        }
+    }
+
+    // Realizar la sustituciÃ³n hacia atrÃ¡s para encontrar las soluciones
+    float *soluciones = (float *)malloc(n * sizeof(float));
+    for (int i = n - 1; i >= 0; i--) {
+        soluciones[i] = matrizAmpliada[i][n];  // El tÃ©rmino independiente
+        for (int j = i + 1; j < n; j++) {
+            soluciones[i] -= matrizAmpliada[i][j] * soluciones[j];
+        }
+        soluciones[i] /= matrizAmpliada[i][i];  // Dividir por el coeficiente
+    }
+
+    // Mostrar las soluciones
+    printf("\nLas soluciones del sistema son:\n");
+    for (int i = 0; i < n; i++) {
+        printf("x[%d] = %.2f\n", i, soluciones[i]);
+    }
+
+    free(soluciones);
+    liberarMatriz(matrizAmpliada, n);
+
+
+        }
+
+//diferenciacion entre el programa 2 y 3
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+// FunciÃ³n para calcular la norma espectral entre el vector actual y el anterior
+float normaEspectral(float *vectorActual, float *vectorAnterior, int n) {
+    float max = fabs(vectorActual[0] - vectorAnterior[0]);
+    for (int i = 1; i < n; i++) {
+        float diferencia = fabs(vectorActual[i] - vectorAnterior[i]);
+        if (diferencia > max) {
+            max = diferencia;
+        }
+    }
+    return max;
+}
+
+// MÃ©todo de Jacobi para resolver el sistema de ecuaciones
+void metodoJacobi(float **matriz, float *vector, int n, float *vectorInicial, int maxIter, float tol) {
+    float *aproximacionAnterior = (float *)malloc(n * sizeof(float));
+    float *aproximacionActual = (float *)malloc(n * sizeof(float));
+
+    // Inicializar la aproximaciÃ³n con el vector inicial
+    for (int i = 0; i < n; i++) {
+        aproximacionAnterior[i] = vectorInicial[i];
+    }
+
+    // Bucle de iteraciÃ³n
+    for (int iter = 0; iter < maxIter; iter++) {
+        // Para cada fila, calcular la nueva aproximaciÃ³n
+        for (int i = 0; i < n; i++) {
+            float suma = 0.0;
+            // Realizar la suma de los otros tÃ©rminos en la ecuaciÃ³n
+            for (int j = 0; j < n; j++) {
+                if (i != j) {
+                    suma += matriz[i][j] * aproximacionAnterior[j];
+                }
+            }
+            // Calcular el nuevo valor para la variable actual
+            aproximacionActual[i] = (vector[i] - suma) / matriz[i][i];
+        }
+
+        // Calcular el error y mostrar el vector actual y el error en cada iteraciÃ³n
+        float error = normaEspectral(aproximacionActual, aproximacionAnterior, n);
+        printf("Iteracion %d:\n", iter + 1);
+        printf("Vector actual: [");
+        for (int i = 0; i < n; i++) {
+            printf(" %.8f", aproximacionActual[i]);
+            if (i < n - 1) printf(",");  // Formato de salida
+        }
+        printf(" ]\n");
+        printf("Error: %.8f\n\n", error);
+
+        // Verificar si se ha alcanzado la tolerancia para detener las iteraciones
+        if (error < tol) {
+            printf("Convergencia alcanzada despues de %d iteraciones.\n\n", iter + 1);
+            break;
+        }
+
+        // Copiar la aproximaciÃ³n actual para usarla en la siguiente iteraciÃ³n
+        for (int i = 0; i < n; i++) {
+            aproximacionAnterior[i] = aproximacionActual[i];
+        }
+    }
+
+    // Imprimir la soluciÃ³n final obtenida
+    printf("Solucion aproximada por Jacobi:\n");
+    for (int i = 0; i < n; i++) {
+        printf("x[%d] = %.8f\n", i, aproximacionActual[i]);
+    }
+
+    free(aproximacionAnterior);
+    free(aproximacionActual);
+}
+
+// FunciÃ³n para leer los parÃ¡metros del usuario
+void leerParametrosJacobi(float *vectorInicial, int *maxIter, float *tol, int n) {
+    printf("Ingrese el vector inicial:\n");
+    for (int i = 0; i < n; i++) {
+        printf("x[%d]: ", i);
+        scanf("%f", &vectorInicial[i]);
+    }
+
+    printf("Ingrese el numero maximo de iteraciones: ");
+    scanf("%d", maxIter);
+
+    printf("Ingrese la tolerancia: ");
+    scanf("%f", tol);
+}
+
+int menu(float **matriz, int n) {
+    int opcion;
+
+    leerMatriz(matriz, n);
+    mostrarMatriz(matriz, n);
+    char respuesta;
+    do {
+        printf("Â¿Los datos son correctos? (s/n): ");
+        scanf(" %c", &respuesta);
+
+        if (respuesta == 'n' || respuesta == 'N') {
+            int renglon, columna;
+            printf("Ingrese el renglon (0 a %d) y la columna (0 a %d) del elemento a corregir:\n", n-1, n-1);
+            scanf("%d %d", &renglon, &columna);
+
+            if (renglon >= 0 && renglon < n && columna >= 0 && columna < n) {
+                printf("Ingrese el nuevo valor para elemento [%d][%d]: ", renglon, columna);
+                scanf("%f", &matriz[renglon][columna]);
+                mostrarMatriz(matriz, n);
+            } else {
+                printf("indices invalidos. Intente nuevamente.\n");
+            }
+        }
+    } while (respuesta == 'n' || respuesta == 'N');
+
+
+    float *vectorIndependiente = leerVectorIndependiente(n);
+
+     if (esEDD(matriz, n)) {
+        printf("La matriz es estrictamente diagonalmente dominante.\n");
+        // Realiza el proceso relacionado con EDD
+    } else if (esDD(matriz, n)) {
+        printf("La matriz es diagonalmente dominante.\n");
+        // Realiza el proceso relacionado con DD
+    } else {
+        printf("La matriz no es diagonalmente dominante.\n");
+        // Intentamos reorganizar las filas
+        if (reorganizarYVerificarDD(matriz, vectorIndependiente, n)) {
+            printf("Se ha reorganizado la matriz y ahora es diagonalmente dominante.\n");
+            mostrarMatriz(matriz, n);
+            // Realiza el proceso relacionado con DD
+        } else {
+            printf("No se puede reorganizar la matriz para hacerla diagonalmente dominante, no se asegura la convergencia\n");
+
+        }
+    }
+
+
+
+
+    float dete = determinante(matriz, n);
+    printf("El determinante de la matriz es: %.2f\n", dete);
+
+    if (dete != 0) {
+        printf("Seleccione el metodo de resoluciÃ³n:\n1. Sustitucion hacia atras\n2. Metodo de Jacobi\n");
+        scanf("%d", &opcion);
+
+        if (opcion == 1) {
+            resolverSistema(matriz, vectorIndependiente, n);
+        } else if (opcion == 2) {
+            float *vectorInicial = (float *)malloc(n * sizeof(float));
+            int maxIter;
+            float tol;
+            leerParametrosJacobi(vectorInicial, &maxIter, &tol, n);
+            metodoJacobi(matriz, vectorIndependiente, n, vectorInicial, maxIter, tol);
+            free(vectorInicial);
+        } else {
+            printf("OpciÃ³n no valida.\n");
+        }
+    } else {
+        printf("El determinante es 0, el sistema no tiene solucion Ãºnica.\n");
+    }
+
+    liberarVector(vectorIndependiente);
+    liberarMatriz(matriz, n);
+    return 0;
+}
+
+//aca empieza el programa 4
+
+// Función para calcular la matriz inversa de una matriz 2D
+vector<vector<long double>> inverse(const vector<vector<long double>>& matrix, int n) {
+    vector<vector<long double>> augmented(n, vector<long double>(2 * n));
+
+    // Crear la matriz aumentada [A | I]
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            augmented[i][j] = matrix[i][j];
+            augmented[i][j + n] = (i == j) ? 1.0 : 0.0; // Matriz identidad
+        }
+    }
+
+    // Aplicar eliminación de Gauss-Jordan
+    for (int i = 0; i < n; ++i) {
+        long double pivot = augmented[i][i];
+        if (pivot == 0) {
+            cout << "Error: la matriz es singular, no se puede invertir." << endl;
+            return {};
+        }
+        // Dividir la fila por el pivote
+        for (int j = 0; j < 2 * n; ++j) {
+            augmented[i][j] /= pivot;
+        }
+
+        // Hacer ceros en las demás filas
+        for (int j = 0; j < n; ++j) {
+            if (i != j) {
+                long double factor = augmented[j][i];
+                for (int k = 0; k < 2 * n; ++k) {
+                    augmented[j][k] -= augmented[i][k] * factor;
+                }
+            }
+        }
+    }
+
+    // Extraer la matriz inversa
+    vector<vector<long double>> inverseMatrix(n, vector<long double>(n));
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            inverseMatrix[i][j] = augmented[i][j + n];
+        }
+    }
+
+    return inverseMatrix;
+}
+
+// Función para mostrar la matriz
+void mostrarMatrizVECT(const vector<vector<long double>>& matrix) {
+    for (const auto& fila : matrix) {
+        for (auto elemento : fila) {
+            cout << elemento << " ";
+        }
+        cout << endl;
+    }
+}
+
+// Implementación del proceso original
+vector<long double> getVec(vector<pair<long double, long double>> cIn){
+    vector<pair<long double, long double>> cInC = cIn;
+
+    int n = cIn.size();
+
+    sort(cIn.begin(), cIn.end());
+    long double izq = cIn[0].first, der = cIn[0].second;
+    int c = -1, ov = 0, d = 1;
+    for (int i = 1; i < n; i++) {
+        if (cIn[i].first <= der) {
+            d++;
+            izq = min(cIn[i].first, izq);
+            der = min(cIn[i].second, der);
+            continue;
+        }
+        if (d == 1) c = i - 1;
+        else c = i;
+        d = 1;
+        ov++;
+        izq = cIn[i].first;
+        der = cIn[i].second;
+    }
+    if (c == -1 or ov > 1) {
+        vector<long double> a(n, 1);
+        return a;
+    }
+    int i = 0;
+    while (cIn[c].first != cInC[i].first && cIn[c].second != cInC[i].second)
+        i++;
+    vector<long double> a(n, 0);
+    a[i] = 1;
+    return a;
+}
+
+// Función para obtener el vector
+vector<long double> inVec(int n){
+    vector<long double> ret(n);
+    for(int i=0; i<n; i++){
+        cout<<"Ingrese el valor "<<i+1<<": ";
+        cin>>ret[i];
+    }
+    return ret;
+}
+
+// Función para calcular la norma espectral de un vector
+long double calcularNormaEspectral(const vector<long double>& vec) {
+    long double norma = 0;
+    for (auto v : vec) {
+        norma = max(norma, abs(v));
+    }
+    return norma;
+}
+
+// Normalización del vector
+void normalizarVector(vector<long double>& vec) {
+    long double norma = calcularNormaEspectral(vec);
+    if (norma != 1) {
+        for (auto& v : vec) {
+            v /= norma;
+        }
+        cout << "El vector no tenía norma espectral igual a 1. Se ha normalizado:\n";
+        for (auto v : vec) {
+            cout << v << " ";
+        }
+        cout << endl;
+    }
+}
+
+int menu3() {
+
+    int n;
+    while (true) {
+        cout << "Ingrese el tamano de la matriz nxn: ";
+        cin >> n;
+        if (n > 0)
+            break;
+        cout << "Ingrese un valor de n > 0 \n";
+    }
+
+    vector<vector<long double>> matrix(n, vector<long double>(n));
+    vector<pair<long double, long double>> cIn(n);
+    int iteracion = 0;
+    vector<long double> vecUltimo;
+
+    // Llenar la matriz
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << "Ingrese elemento " << i + 1 << " " << j + 1 << ": ";
+            cin >> matrix[i][j];
+            if (i == j) {
+                cIn[i].first += matrix[i][j];
+                cIn[i].second += matrix[i][j];
+            } else {
+                cIn[i].first -= abs(matrix[i][j]);
+                cIn[i].second += abs(matrix[i][j]);
+            }
+        }
+    }
+
+    // Confirmación y corrección de la matriz
+    char opcion;
+    do {
+        cout << "\nMatriz ingresada:\n";
+        mostrarMatrizVECT(matrix);
+
+        cout << "\n¿La matriz es correcta? (s para continuar, n para corregir): ";
+        cin >> opcion;
+
+        if (opcion == 'n' || opcion == 'N') {
+            int fila, columna;
+            long double nuevoValor;
+            cout << "Ingrese el índice de la fila (1-" << n << "): ";
+            cin >> fila;
+            cout << "Ingrese el índice de la columna (1-" << n << "): ";
+            cin >> columna;
+            cout << "Ingrese el nuevo valor: ";
+            cin >> nuevoValor;
+
+            // Actualizar el valor en la matriz
+            matrix[fila - 1][columna - 1] = nuevoValor;
+
+            // Recalcular los valores de cIn si es diagonal o no
+            if (fila == columna) {
+                cIn[fila - 1].first += nuevoValor;
+                cIn[fila - 1].second += nuevoValor;
+            } else {
+                cIn[fila - 1].first -= abs(nuevoValor);
+                cIn[fila - 1].second += abs(nuevoValor);
+            }
+        }
+    } while (opcion != 's' && opcion != 'S');
+
+    int option  = 0;
+
+    cout << "Ingrese el máximo número de iteraciones: ";
+    int maxIter;
+    cin >> maxIter;
+
+
+    cout << "Ingrese el valor de la tolerancia: ";
+    long double tol;
+    cin >> tol;
+
+
+    long double Err = tol + 1, anMaxVal;
+
+    // Elegir si usar vector autogenerado o ingresado (Primero para la matriz original)
+    cout << "\n¿Quieres definir el vector o lo generamos automáticamente? (1 = Definir, 2 = Automático): ";
+    cin >> option;
+    vector<long double> vec = ( option ? inVec(n) : getVec(cIn));
+    if (option == 1) {
+        vec = inVec(n);
+         normalizarVector(vec);
+    } else {
+        vec = getVec(cIn);
+    }
+
+    cout << "Vector elegido: \n";
+    for (auto a : vec) {
+        cout << a << " ";
+    }
+    cout << endl;
+
+    float valorgrande;
+    // Ejecutar proceso con la matriz original
+    int it = 0;
+    while (tol <= Err && it < maxIter) {
+        vector<long double> vecAux(n, 0);
+
+        long double maxVal = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                vecAux[i] += vec[j] * matrix[i][j];
+            }
+            maxVal = max(abs(vecAux[i]), maxVal);
+        }
+        for (int i = 0; i < n; i++) {
+            vecAux[i] /= maxVal;
+        }
+
+        vec = vecAux;
+        cout << "\n\nIteración: " << iteracion+1  << "\nVector actual (Asociado al lambda):\n";
+        cout << "[";
+            for (size_t i = 0; i < vec.size(); i++) {
+                cout << vec[i];
+                if (i < vec.size() - 1) { // Agregar coma si no es el último elemento
+                    cout << " , ";
+                }
+            }
+        cout << "]";
+        cout << "\nLambda: " << maxVal << endl;
+
+        if (it > 0) {
+            Err = abs(maxVal - anMaxVal);
+            cout << "Error : " << Err << endl;
+        }
+        anMaxVal = maxVal;
+        it++;
+        iteracion++;
+         vecUltimo = vec;
+        valorgrande=maxVal;
+    }
+
+    if (it == maxIter) {
+        cout << "\nSe alcanzó el máximo número de iteraciones permitido.\n";
+        cout << "Error final: " << Err << endl;
+    } else {
+        cout << "\nSe alcanzó la tolerancia deseada.\n";
+    }
+
+    int opcionvalor;
+
+    do{
+
+    cout<<"\n\n Para calcular el valor propio mas pequeño, ¿desea reutilizar la tolerancia e iteraciones maximas del proceso original (0) o reingresarlos (1)?\n";
+    cout<<"opcion: ";
+    cin>>opcionvalor;
+    }while(opcionvalor!=0 && opcionvalor!=1);
+
+
+    // Obtener la matriz inversa de la original y volver a hacer el proceso con la inversa
+    cout << "\nCalculando la inversa de la matriz...\n";
+    vector<vector<long double>> inverseMatrix = inverse(matrix, n);
+    cout << "\nMatriz inversa calculada:\n";
+    mostrarMatrizVECT(inverseMatrix);
+    cout<<"\n";
+
+    float valorpeque;
+
+    if(opcionvalor==1){
+    cout << "Ingrese el máximo número de iteraciones: ";
+
+    cin >> maxIter;
+
+    cout << "Ingrese el valor de la tolerancia: ";
+    cin >> tol;
+
+    }
+
+
+
+    // Ejecutar el mismo proceso con la matriz inversa
+    cout << "\n¿Quieres definir el vector o lo generamos automáticamente? (1 = Definir, 2 = Automático): ";
+    cin >> option;
+    if (option == 1) {
+        vec = inVec(n);
+        normalizarVector(vec);
+    } else {
+        vec = getVec(cIn);
+    }
+
+
+
+    cout << "Vector elegido para la inversa: \n";
+    for (auto a : vec) {
+        cout << a << " ";
+    }
+    cout << endl;
+
+    it = 0;
+    int iteracioninv=0;
+
+    long double Erro = tol + 1, anMaxValo;
+
+    while (tol <= Erro && it < maxIter) {
+        vector<long double> vecAux(n, 0);
+
+        long double maxVal = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                vecAux[i] += vec[j] * inverseMatrix[i][j];
+            }
+            maxVal = max(abs(vecAux[i]), maxVal);
+        }
+        for (int i = 0; i < n; i++) {
+            vecAux[i] /= maxVal;
+        }
+
+        vec = vecAux;
+        cout << "\n\nIteración: " << iteracioninv+1 << "\nVector inverso (Asociado al lambda):\n";
+        cout << "[" ;
+
+        for (size_t i = 0; i < vec.size(); i++) {
+            cout << vec[i];
+            if (i < vec.size() - 1) { // Agregar coma si no es el último elemento
+                cout << " , ";
+            }
+        }
+        cout << "]";
+        cout << "\nLambda: " << maxVal << endl;
+
+        if (it > 0) {
+            Erro = abs(maxVal - anMaxValo);
+            cout << "Error : " << Erro << endl;
+        }
+        anMaxValo = maxVal;
+
+        // Imprimir el recíproco de lambda cuando la tolerancia se alcanza
+        if (Erro <= tol) {
+            cout << "\nEl vector más pequeño es el recíproco de lambda." << endl;
+            cout << "Recíproco de lambda: " << 1.0 / maxVal << endl;
+        }
+
+        it++;
+        iteracion++;
+        iteracioninv++;
+        valorpeque=maxVal;
+    }
+        if (it == maxIter) {
+        cout << "\nSe alcanzó el máximo número de iteraciones permitido.\n";
+        cout << "Error final: " << Erro << endl;
+        } else {
+        cout << "\nSe alcanzó la tolerancia deseada.\n";
+        }
+
+    cout<<"\n El valor propio mas grandes es: "<<valorgrande;
+    cout << "\nVector Asociado al valor propio mas alto es:\n[";
+    for (size_t i = 0; i < vecUltimo.size(); i++) {
+         cout << vecUltimo[i];
+        if (i < vecUltimo.size() - 1) { // Agregar coma si no es el último elemento
+             cout << " , ";
+         }
+    }
+
+    cout << "]" << endl;
+
+    cout<<"\n El valor propio mas pequeño es: "<<1.0/valorpeque;
+
+    cout<<"\n Vector asociado al valor propio mas pequeño es: \n\n";
+
+        cout << "[";
+        for (size_t i = 0; i < vec.size(); i++) {
+            cout << vec[i];
+            if (i < vec.size() - 1) { // Agregar coma si no es el último elemento
+                cout << " , ";
+            }
+        }
+        cout << "]";
+
+    cout<<"\n\n si desea ver la sucesion completa,esta arriba :)\n\n  ";
+
+    return 0;
+}
+
+
+
+
+int main(void){
+  int opt=0;
+   int n, opci;
+  while(true){
+    cout<<"MENU\n";
+    std::cout<<"Seleccione el programa :\n 1 Biseccion y Secante\n 2 Obtencion de determinante y solucion de sistema spor gauus o Jaccobi (programa 2  y 3 )\n 3 Obtener los  valores propios por medio del metodo de potencias (mayor y menor)  (programa 4)\n 0 Salir \n Opcion: ";
+    std::cin>>opt;
+    if(!opt) break;
+    switch(opt){
+      case 1:
+      menu1();
+      break;
+      case 2:
+
+      	do {
+        printf("Ingrese opcion\n1.- Ingresar matriz\n2.- Salir del programa\n");
+        scanf("%d", &opci);
+
+        if (opci == 1) {
+            printf("Ingrese la dimension de la matriz (n x n): ");
+            scanf("%d", &n);
+
+            float **matriz = crearMatriz(n);
+            menu(matriz, n);
+
+           // liberarMatriz(matriz, n);
+        }
+    } while (opci != 2);
+        cout<<"\n\n";
+
+      break;
+      case 3:
+
+      	do {
+        printf("Ingrese opcion\n1.- Ingresar matriz\n2.- Salir del programa\n");
+        scanf("%d", &opci);
+
+        if (opci == 1) {
+            menu3();
+        }
+    } while (opci != 2);
+
+    cout<<"\n\n";
+
+
+      	break;
+      default:
+      break;
+    }
+  }
+
+  return 0;
+}
